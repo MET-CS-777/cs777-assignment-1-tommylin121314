@@ -50,9 +50,19 @@ if __name__ == "__main__":
     #Your code goes here
     
     # Splits string into array of values by comma separator
-    # Clean data by removing incorrect rows
     taxi_data = rdd.map(lambda x: x.split(','))
+
+    # This filters out zero values for total amount, total fare, and distance traveled
+    # Also filters out rides that lasted less than a minute
     filtered_data = taxi_data.filter(correctRows)
+
+    # Filters out rides that have a 0.0 in the lat/long coordinates (rides are in NYC)
+    # Filters out rides less than 60 seconds, rides less than 0.1 miles, and rides that cost less than $1
+    # Filters out rides that have a smaller total cost compared to fare cost which is impossible
+    filtered_data = filtered_data\
+        .filter(lambda x: float(x[6]) * float(x[7]) * float(x[8]) * float(x[9]) > 0)\
+        .filter(lambda x: float(x[5]) >= 0.1 and float(x[4]) >= 60 and float(x[16]) >= 1)\
+        .filter(lambda x: float(x[16]) >= float(x[11]))
 
     # Gets rid of duplicate taxi + driver combinations using map and distinct
     # Turn each unique taxi driver into tuple of single count using map
